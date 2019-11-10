@@ -1,53 +1,53 @@
+extern crate regex;
+
 use regex::Regex;
 use std::io;
 // Scanner
 // Scanner struct contains stream
 
-struct Scanner {
-    stream: String
-}
-
 enum Token {
     // logistical
-    newline,
+    NewLine,
     // keywords
-    clear,
-    list,
-    quit,
-    exit,
+    List,
+    Del,
     // operators
-    add,
-    subt,
-    expn,
-    mult,
-    div,
+    Plus,
+    Minus,
+    Exponent,
+    Multiply,
+    Divide,
     // organizing, etc
-    l_paren,
-    r_paren,
-    eq,
+    LeftParen,
+    RightParen,
+    Equals,
     // numbers
-    int,
-    float,
+    Int(u64),
+    Float(f64),
     // variables
-    vars(String)
+    Variable(String)
 }
 
-impl Scanner {
-    // TODO: allow for optional initial stream arg
-    fn initialize(&self} {
-        let mut input = String::new();
-        io::stdin().read_line(&mut guess)
-            .expect("Failed to read line");
-        self.stream = input;
-    }
-
-    fn next_token(&self) -> Token {
-        
-    }
+fn initialize_stream(stream: &String) -> &String {
+    return stream;
 }
 
-fn scanner_interface() {
+fn make_patterns_map() -> Vec<(Regex, Token)> {
+    let patterns_map = vec![
+        (Regex::new(r"^\n").unwrap(), Token::NewLine),
+        (Regex::new(r"^list").unwrap(), Token::List),
+        (Regex::new(r"^del").unwrap(), Token::Del),
+        (Regex::new(r"^+").unwrap(), Token::Plus),
+        (Regex::new(r"^-").unwrap(), Token::Minus),
+        (Regex::new(r"^\*\*").unwrap(), Token::Exponent),
+        (Regex::new(r"^\*").unwrap(), Token::Multiply),
+        (Regex::new(r"^/").unwrap(), Token::Divide),
+        (Regex::new(r"^\(").unwrap(), Token::LeftParen),
+        (Regex::new(r"^\)").unwrap(), Token::RightParen),
+        (Regex::new(r"^=").unwrap(), Token::Equals),
 
+    ];
+    return patterns_map;
 }
 
 fn main() {
