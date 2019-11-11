@@ -6,7 +6,7 @@ use std::io;
 // Scanner/lexer
 
 enum Token {
-    // logistical
+    // parsing logistics
     NewLine,
     WhiteSpace,
     // keywords
@@ -25,13 +25,16 @@ enum Token {
     RightParen,
     Equals,
     // numbers
-    Int(u64),
     Float(f64),
+    Int(u64),
     // variables
-    Variable(String)
+    Variable(String),
+    // errors
+    Error
 }
 
-fn make_patterns_map() -> Vec<(Regex, Token)> {
+fn get_next_token(mut stream: String) -> (String, Token) {
+    // TODO replace with match?
     let patterns_map = vec![
         (Regex::new(r"^\n").unwrap(), Token::NewLine),
         (Regex::new(r"^[ ]+").unwrap(), Token::WhiteSpace),
@@ -46,32 +49,44 @@ fn make_patterns_map() -> Vec<(Regex, Token)> {
         (Regex::new(r"^/").unwrap(), Token::Divide),
         (Regex::new(r"^\(").unwrap(), Token::LeftParen),
         (Regex::new(r"^\)").unwrap(), Token::RightParen),
-        (Regex::new(r"^=").unwrap(), Token::Equals)
+        (Regex::new(r"^=").unwrap(), Token::Equals),
+        (Regex::new(r"^[0-9]+\.[0-9]*").unwrap(), Token::Float(0.0)),
+        (Regex::new(r"^[0-9]+").unwrap(), Token::Int(0))
     ];
-    return patterns_map;
+
+    // if string is blank, get user input, set it to stream
+    if stream == "" {
+        io::stdin().read_line(&mut stream)
+            .expect("Failed to read line");
+    }
+
+    // iterate through matches
+    for (re, token) in patterns_map {
+        if re.is_match(&stream) {
+            // modify stream
+            stream = stream[re.find(&stream).unwrap().end()..].to_string();
+            return (stream, token)
+        }
+    }
+
+    // if no matches, return error
+    return (String::new(), Token::Error)
 }
 
-fn get_next_token(stream: String) -> (String, Token) {
-    // TODO replace with match?
-    if Regex
-    return (
-}
-
-fn update_stream(Regex) {
-
-}
 
 fn main() {
     //// scanner
     // initialize stream
     let mut stream = String::from("");
-    let patterns = make_patterns_map();
-    let token = Token::NoneT;
+    let mut token = Token::NoneT;
 
     // while stream exists:
     //  run stream against patterns
     //  retrieve regex match
     //  from match, get token
     //  from match, snip stream
+    let temp = get_next_token(stream);
+    stream = temp.0;
+    token = temp.1;
 
 }
