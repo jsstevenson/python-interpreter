@@ -33,6 +33,10 @@ enum Token {
     Error
 }
 
+// General retriever of next token.
+// Takes stream, a String containing line(s) of input, grabs the longest form
+// of the first token it finds, and returns a tuple of the String sans that
+// token as well as the corresponding Token struct
 fn get_next_token(mut stream: String) -> (String, Token) {
     // TODO replace with match?
     let patterns_map = vec![
@@ -73,20 +77,20 @@ fn get_next_token(mut stream: String) -> (String, Token) {
     return (String::new(), Token::Error)
 }
 
-
 fn main() {
     //// scanner
     // initialize stream
-    let mut stream = String::from("");
-    let mut token = Token::NoneT;
+    let mut pair = get_next_token("".to_string());
+    let mut stream = pair.0;
+    let mut token = pair.1;
 
-    // while stream exists:
-    //  run stream against patterns
-    //  retrieve regex match
-    //  from match, get token
-    //  from match, snip stream
-    let temp = get_next_token(stream);
-    stream = temp.0;
-    token = temp.1;
-
+    // continually retrieve tokens
+    loop {
+        match token {
+            Token::Exit => break,
+            _ => pair = get_next_token(stream)
+        }
+        stream = pair.0;
+        token = pair.1;
+    }
 }
