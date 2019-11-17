@@ -77,12 +77,21 @@ fn get_next_token(mut stream: String) -> (String, Token) {
     return (String::new(), Token::Error)
 }
 
+fn print_token(token: &Token) {
+    match token {
+        Token::NewLine => println!("newline"),
+        Token::WhiteSpace => println!("whitespace length"),
+        Token::List => println!("list"),
+        _ => println!("other?")
+    }
+}
+
 fn main() {
     //// scanner
     // initialize stream
     let mut pair = get_next_token("".to_string());
     let mut stream = pair.0;
-    let mut token = pair.1;
+    let mut token = &pair.1;
 
     // continually retrieve tokens
     loop {
@@ -91,6 +100,8 @@ fn main() {
             _ => pair = get_next_token(stream)
         }
         stream = pair.0;
-        token = pair.1;
+        token = &pair.1;
+        // TODO debugging
+        print_token(token);
     }
 }
