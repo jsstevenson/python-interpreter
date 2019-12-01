@@ -8,7 +8,7 @@ use std::io;
 enum Token {
     // parsing logistics
     NewLine,
-    WhiteSpace,
+    WhiteSpace(u64),
     // keywords
     List,
     Del,
@@ -33,20 +33,25 @@ enum Token {
     Error
 }
 
-// General retriever of next token.
-// Takes stream, a String containing line(s) of input, grabs the longest form
-// of the first token it finds, and returns a tuple of the String sans that
-// token as well as the corresponding Token struct
+/* General retriever of next token.
+ * Takes stream, a String containing line(s) of input, grabs the longest form
+ * of the first token it finds, and returns a tuple of the String sans that
+ * token as well as the corresponding Token struct.
+ *
+ * General notes:
+ *  - WhiteSpace should store length (for determining scope)
+ *  - TODO Need to work out how to raise error, and store error type
+ */
 fn get_next_token(mut stream: String) -> (String, Token) {
     // TODO replace with match?
     let patterns_map = vec![
         (Regex::new(r"^\n").unwrap(), Token::NewLine),
-        (Regex::new(r"^[ ]+").unwrap(), Token::WhiteSpace),
+        (Regex::new(r"^[ ]+").unwrap(), Token::WhiteSpace(0)),
         (Regex::new(r"^list").unwrap(), Token::List),
         (Regex::new(r"^del").unwrap(), Token::Del),
         (Regex::new(r"^exit").unwrap(), Token::Exit),
         (Regex::new(r"^None").unwrap(), Token::NoneT),
-        (Regex::new(r"^+").unwrap(), Token::Plus),
+        (Regex::new(r"^\+").unwrap(), Token::Plus),
         (Regex::new(r"^-").unwrap(), Token::Minus),
         (Regex::new(r"^\*\*").unwrap(), Token::Exponent),
         (Regex::new(r"^\*").unwrap(), Token::Multiply),
@@ -56,7 +61,8 @@ fn get_next_token(mut stream: String) -> (String, Token) {
         (Regex::new(r"^=").unwrap(), Token::Equals),
         (Regex::new(r"^[0-9]+\.[0-9]*").unwrap(), Token::Float(0.0)),
         (Regex::new(r"^[0-9]+").unwrap(), Token::Int(0)),
-        (Regex::new(r"^[A-z\_][A-z0-9\_]*").unwrap(), Token::Variable(String::new()))
+        (Regex::new(r"^[A-z][A-z0-9]*").unwrap(), Token::Variable(String::new())),
+        // TODO error handling here
     ];
 
     // if string is blank, get user input, set it to stream
@@ -78,12 +84,29 @@ fn get_next_token(mut stream: String) -> (String, Token) {
     return (String::new(), Token::Error)
 }
 
+/* print_token - debugging utility. Prints type of supplied Token, and value
+ * where relevant.
+ */
 fn print_token(token: &Token) {
     match token {
         Token::NewLine => println!("newline"),
-        Token::WhiteSpace => println!("whitespace length"),
+        Token::WhiteSpace(len) => println!("whitespace length: {}", len),
         Token::List => println!("list"),
-        _ => println!("other?")
+        Token::Del => println!("Delete"),
+        Token::Exit => println!("Exit"),
+        Token::NoneT => println!("NoneType"),
+        Token::Plus => println!("Plus"),
+        Token::Minus => println!("Minus"),
+        Token::Exponent => println!("Exponent"),
+        Token::Multiply => println!("Multiply"),
+        Token::Divide => println!("Divide"),
+        Token::LeftParen => println!("Left Paren"),
+        Token::RightParen => println!("Right Paren"),
+        Token::Equals => println!("Equals"),
+        Token::Float(val) => println!("Float: {}", val),
+        Token::Int(val) => println!("Int: {}", val),
+        Token::Variable(name) => println!("Variable name: {}", name),
+        Token::Error => println!("Error"),
     }
 }
 
@@ -102,7 +125,7 @@ fn main() {
         }
         stream = pair.0;
         token = &pair.1;
-        // TODO debugging
+        // TODO debugging purposes
         print_token(token);
     }
 }
