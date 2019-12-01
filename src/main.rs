@@ -55,7 +55,8 @@ fn get_next_token(mut stream: String) -> (String, Token) {
         (Regex::new(r"^\)").unwrap(), Token::RightParen),
         (Regex::new(r"^=").unwrap(), Token::Equals),
         (Regex::new(r"^[0-9]+\.[0-9]*").unwrap(), Token::Float(0.0)),
-        (Regex::new(r"^[0-9]+").unwrap(), Token::Int(0))
+        (Regex::new(r"^[0-9]+").unwrap(), Token::Int(0)),
+        (Regex::new(r"^[A-z\_][A-z0-9\_]*").unwrap(), Token::Variable(String::new()))
     ];
 
     // if string is blank, get user input, set it to stream
