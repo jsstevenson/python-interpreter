@@ -33,6 +33,18 @@ enum Token {
     Error
 }
 
+/* Returns result of attempt to match given regex pattern to the stream
+ * If no match, returns None. Otherwise, returns a string slice of the match
+ * from the stream, as a Some().
+ */
+fn check_match(stream: &str, re: Regex) -> Option<&str> {
+    if re.is_match(stream) {
+        return Some(re.find(stream).unwrap().as_str());
+    } else {
+        return None;
+    }
+}
+
 /* General retriever of next token.
  * Takes stream, a String containing line(s) of input, grabs the longest form
  * of the first token it finds, and returns a tuple of the String sans that
