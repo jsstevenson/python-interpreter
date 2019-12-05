@@ -43,7 +43,6 @@ enum Token {
  *  - TODO Need to work out how to raise error, and store error type
  */
 fn get_next_token(mut stream: String) -> (String, Token) {
-    // TODO replace with match?
     let patterns_map = vec![
         (Regex::new(r"^\n").unwrap(), Token::NewLine),
         (Regex::new(r"^[ ]+").unwrap(), Token::WhiteSpace(0)),
@@ -74,7 +73,7 @@ fn get_next_token(mut stream: String) -> (String, Token) {
     // iterate through matches
     for (re, token) in patterns_map {
         if re.is_match(&stream) {
-            // modify stream
+            // remove token from stream
             stream = stream[re.find(&stream).unwrap().end()..].to_string();
             return (stream, token)
         }
@@ -125,6 +124,22 @@ fn main() {
         }
         stream = pair.0;
         token = &pair.1;
+        // update token values
+        match token {
+            Token::WhiteSpace(_len) => {
+                // do something
+            },
+            Token::Float(_val) => {
+                // do something
+            },
+            Token::Int(_val) => {
+                // do something
+            },
+            Token::Variable(_name) => {
+                // do something
+            },
+            _ => ()
+        }
         // TODO debugging purposes
         print_token(token);
     }
