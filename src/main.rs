@@ -65,11 +65,11 @@ fn get_next_token(mut stream: String) -> (String, Token) {
     // TODO figure out how to prevent repeated compiling
     let re_newline = Regex::new(r"^\n").unwrap();
     let re_whitespace = Regex::new(r"^\n").unwrap();
+    let re_list = Regex::new(r"^list[\n ]").unwrap();
+    let re_del = Regex::new(r"^del[\n ]").unwrap();
+    let re_exit = Regex::new(r"^exit[\n ]").unwrap();
+    let re_none = Regex::new(r"^None[\n ]").unwrap();
     let re_variable = Regex::new(r"^[A-z][A-z0-9]*").unwrap(); 
-    let re_list = Regex::new(r"^list").unwrap();
-    let re_del = Regex::new(r"^del").unwrap();
-    let re_exit = Regex::new(r"^exit").unwrap();
-    let re_none = Regex::new(r"^None").unwrap();
     let re_plus = Regex::new(r"^\+").unwrap();
     let re_minus = Regex::new(r"^-").unwrap();
     let re_exponent = Regex::new(r"^\*\*").unwrap();
@@ -85,8 +85,6 @@ fn get_next_token(mut stream: String) -> (String, Token) {
         return (String::from(&stream[x.len()..]), Token::NewLine);
     } else if let Some(x) = check_match(&stream, re_whitespace) {
         return (String::from(&stream[x.len()..]), Token::WhiteSpace(x.len() as i32));
-    } else if let Some(x) = check_match(&stream, re_variable) {
-        return (String::from(&stream[x.len()..]), Token::Variable(String::from(x)));
     } else if let Some(x) = check_match(&stream, re_list) {
         return (String::from(&stream[x.len()..]), Token::List);
     } else if let Some(x) = check_match(&stream, re_del) {
@@ -95,6 +93,8 @@ fn get_next_token(mut stream: String) -> (String, Token) {
         return (String::from(&stream[x.len()..]), Token::Exit);
     } else if let Some(x) = check_match(&stream, re_none) {
         return (String::from(&stream[x.len()..]), Token::NoneT);
+    } else if let Some(x) = check_match(&stream, re_variable) {
+        return (String::from(&stream[x.len()..]), Token::Variable(String::from(x)));
     } else if let Some(x) = check_match(&stream, re_plus) {
         return (String::from(&stream[x.len()..]), Token::Plus);
     } else if let Some(x) = check_match(&stream, re_minus) {
