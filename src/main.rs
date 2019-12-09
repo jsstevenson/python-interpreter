@@ -8,7 +8,7 @@ use std::io;
 enum Token {
     // parsing logistics
     NewLine,
-    WhiteSpace(u64),
+    WhiteSpace(i32),
     // keywords
     List,
     Del,
@@ -55,44 +55,49 @@ fn check_match(stream: &str, re: Regex) -> Option<&str> {
  *  - TODO Need to work out how to raise error, and store error type
  */
 fn get_next_token(mut stream: String) -> (String, Token) {
-    let patterns_map = vec![
-        (Regex::new(r"^\n").unwrap(), Token::NewLine),
-        (Regex::new(r"^[ ]+").unwrap(), Token::WhiteSpace(0)),
-        (Regex::new(r"^list").unwrap(), Token::List),
-        (Regex::new(r"^del").unwrap(), Token::Del),
-        (Regex::new(r"^exit").unwrap(), Token::Exit),
-        (Regex::new(r"^None").unwrap(), Token::NoneT),
-        (Regex::new(r"^\+").unwrap(), Token::Plus),
-        (Regex::new(r"^-").unwrap(), Token::Minus),
-        (Regex::new(r"^\*\*").unwrap(), Token::Exponent),
-        (Regex::new(r"^\*").unwrap(), Token::Multiply),
-        (Regex::new(r"^/").unwrap(), Token::Divide),
-        (Regex::new(r"^\(").unwrap(), Token::LeftParen),
-        (Regex::new(r"^\)").unwrap(), Token::RightParen),
-        (Regex::new(r"^=").unwrap(), Token::Equals),
-        (Regex::new(r"^[0-9]+\.[0-9]*").unwrap(), Token::Float(0.0)),
-        (Regex::new(r"^[0-9]+").unwrap(), Token::Int(0)),
-        (Regex::new(r"^[A-z][A-z0-9]*").unwrap(), Token::Variable(String::new())),
-        // TODO error handling here
-    ];
-
     // if string is blank, get user input, set it to stream
     if stream == "" {
         io::stdin().read_line(&mut stream)
             .expect("Failed to read line");
     }
 
-    // iterate through matches
-    for (re, token) in patterns_map {
-        if re.is_match(&stream) {
-            // remove token from stream
-            stream = stream[re.find(&stream).unwrap().end()..].to_string();
-            return (stream, token)
-        }
+    if let Some(x) = check_match(&stream, Regex::new(r"^\n").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::NewLine);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^[ ]+").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::WhiteSpace(x.len() as i32));
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^list").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::List);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^del").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Del);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^exit").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Exit);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^None").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::NoneT);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^\+").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Plus);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^-").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Minus);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^\*\*").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Exponent);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^\*").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Multiply);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^/").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Divide);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^\(").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::LeftParen);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^\)").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::RightParen);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^=").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Equals);
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^[0-9]+\.[0-9]*").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Float(x.parse().unwrap()));
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^[0-9]+").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Int(x.parse().unwrap()));
+    } else if let Some(x) = check_match(&stream, Regex::new(r"^[A-z][A-z0-9]*").unwrap()) {
+        return (String::from(&stream[x.len()..]), Token::Variable(String::from(x)));
+    } else {
+        return (String::new(), Token::Error)
     }
-
-    // if no matches, return error
-    return (String::new(), Token::Error)
 }
 
 /* print_token - debugging utility. Prints type of supplied Token, and value
