@@ -53,6 +53,7 @@ fn check_match(stream: &str, re: Regex) -> Option<&str> {
  * General notes:
  *  - WhiteSpace should store length (for determining scope)
  *  - TODO Need to work out how to raise error, and store error type
+ *  - TODO should move Regexes to enable better compilation
  */
 fn get_next_token(mut stream: String) -> (String, Token) {
     // if string is blank, get user input, set it to stream
@@ -155,9 +156,11 @@ fn main() {
             Token::Variable(_name) => {
                 // do something
             },
-            _ => ()
-        }
-        // TODO debugging purposes
+            // TODO debugging purposes
+            _ => {
+                // do something
+            }
+        };
         print_token(token);
     }
 }
