@@ -53,7 +53,6 @@ fn check_match(stream: &str, re: Regex) -> Option<&str> {
  * General notes:
  *  - WhiteSpace should store length (for determining scope)
  *  - TODO Need to work out how to raise error, and store error type
- *  - TODO should move Regexes to enable better compilation
  */
 fn get_next_token(mut stream: String) -> (String, Token) {
     // if string is blank, get user input, set it to stream
@@ -62,40 +61,60 @@ fn get_next_token(mut stream: String) -> (String, Token) {
             .expect("Failed to read line");
     }
 
-    if let Some(x) = check_match(&stream, Regex::new(r"^\n").unwrap()) {
+    // regex options
+    // TODO figure out how to prevent repeated compiling
+    let re_newline = Regex::new(r"^\n").unwrap();
+    let re_whitespace = Regex::new(r"^\n").unwrap();
+    let re_variable = Regex::new(r"^[A-z][A-z0-9]*").unwrap(); 
+    let re_list = Regex::new(r"^list").unwrap();
+    let re_del = Regex::new(r"^del").unwrap();
+    let re_exit = Regex::new(r"^exit").unwrap();
+    let re_none = Regex::new(r"^None").unwrap();
+    let re_plus = Regex::new(r"^\+").unwrap();
+    let re_minus = Regex::new(r"^-").unwrap();
+    let re_exponent = Regex::new(r"^\*\*").unwrap();
+    let re_multiply = Regex::new(r"^\*").unwrap();
+    let re_divide = Regex::new(r"^/").unwrap();
+    let re_leftparen = Regex::new(r"^\(").unwrap();
+    let re_rightparen = Regex::new(r"^\)").unwrap();
+    let re_eq = Regex::new(r"^=").unwrap();
+    let re_float = Regex::new(r"^[0-9]+\.[0-9]*").unwrap();
+    let re_int = Regex::new(r"^[0-9]+").unwrap();
+
+    if let Some(x) = check_match(&stream, re_newline) {
         return (String::from(&stream[x.len()..]), Token::NewLine);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^[ ]+").unwrap()) {
+    } else if let Some(x) = check_match(&stream, re_whitespace) {
         return (String::from(&stream[x.len()..]), Token::WhiteSpace(x.len() as i32));
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^list").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::List);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^del").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::Del);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^exit").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::Exit);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^None").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::NoneT);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^\+").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::Plus);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^-").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::Minus);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^\*\*").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::Exponent);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^\*").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::Multiply);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^/").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::Divide);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^\(").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::LeftParen);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^\)").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::RightParen);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^=").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::Equals);
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^[0-9]+\.[0-9]*").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::Float(x.parse().unwrap()));
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^[0-9]+").unwrap()) {
-        return (String::from(&stream[x.len()..]), Token::Int(x.parse().unwrap()));
-    } else if let Some(x) = check_match(&stream, Regex::new(r"^[A-z][A-z0-9]*").unwrap()) {
+    } else if let Some(x) = check_match(&stream, re_variable) {
         return (String::from(&stream[x.len()..]), Token::Variable(String::from(x)));
+    } else if let Some(x) = check_match(&stream, re_list) {
+        return (String::from(&stream[x.len()..]), Token::List);
+    } else if let Some(x) = check_match(&stream, re_del) {
+        return (String::from(&stream[x.len()..]), Token::Del);
+    } else if let Some(x) = check_match(&stream, re_exit) {
+        return (String::from(&stream[x.len()..]), Token::Exit);
+    } else if let Some(x) = check_match(&stream, re_none) {
+        return (String::from(&stream[x.len()..]), Token::NoneT);
+    } else if let Some(x) = check_match(&stream, re_plus) {
+        return (String::from(&stream[x.len()..]), Token::Plus);
+    } else if let Some(x) = check_match(&stream, re_minus) {
+        return (String::from(&stream[x.len()..]), Token::Minus);
+    } else if let Some(x) = check_match(&stream, re_exponent) {
+        return (String::from(&stream[x.len()..]), Token::Exponent);
+    } else if let Some(x) = check_match(&stream, re_multiply) {
+        return (String::from(&stream[x.len()..]), Token::Multiply);
+    } else if let Some(x) = check_match(&stream, re_divide) {
+        return (String::from(&stream[x.len()..]), Token::Divide);
+    } else if let Some(x) = check_match(&stream, re_leftparen) {
+        return (String::from(&stream[x.len()..]), Token::LeftParen);
+    } else if let Some(x) = check_match(&stream, re_rightparen) {
+        return (String::from(&stream[x.len()..]), Token::RightParen);
+    } else if let Some(x) = check_match(&stream, re_eq) {
+        return (String::from(&stream[x.len()..]), Token::Equals);
+    } else if let Some(x) = check_match(&stream, re_float) {
+        return (String::from(&stream[x.len()..]), Token::Float(x.parse().unwrap()));
+    } else if let Some(x) = check_match(&stream, re_int) {
+        return (String::from(&stream[x.len()..]), Token::Int(x.parse().unwrap()));
     } else {
         return (String::new(), Token::Error)
     }
