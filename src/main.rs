@@ -64,7 +64,7 @@ fn get_next_token(mut stream: String) -> (String, Token) {
     // regex options
     // TODO figure out how to prevent repeated compiling
     let re_newline = Regex::new(r"^\n").unwrap();
-    let re_whitespace = Regex::new(r"^\n").unwrap();
+    let re_whitespace = Regex::new(r"^[ ]+").unwrap();
     let re_list = Regex::new(r"^list[\n ]").unwrap();
     let re_del = Regex::new(r"^del[\n ]").unwrap();
     let re_exit = Regex::new(r"^exit[\n ]").unwrap();
