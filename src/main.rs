@@ -1,39 +1,30 @@
 pub mod scanner;
+use std::collections::VecDeque;
 
 fn main() {
-    //// scanner
-    // initialize stream
-    let mut pair = scanner::get_next_token("".to_string());
-    let mut stream = pair.0;
-    let mut token = &pair.1;
+    // initialize stream, history
+    let mut input = scanner::Input {
+        stream: String::from(""),
+        history: VecDeque::new()
+    };
 
-    // continually retrieve tokens
+    let mut token = scanner::Token::NewLine;
+
+    // recursive descent parse
     loop {
         match token {
             scanner::Token::Exit => break,
-            _ => pair = scanner::get_next_token(stream)
-        }
-        stream = pair.0;
-        token = &pair.1;
-        // update token values
-        match token {
-            scanner::Token::WhiteSpace(_len) => {
-                // do something
-            },
-            scanner::Token::Float(_val) => {
-                // do something
-            },
-            scanner::Token::Int(_val) => {
-                // do something
-            },
-            scanner::Token::Variable(_name) => {
-                // do something
-            },
-            // TODO debugging purposes
             _ => {
-                // do something
+                // put next_token wrapping in here?
+                if input.history.is_empty() {
+                    token = input.get_next_token();
+                } else {
+                    // get from history
+                    token = input.history.pop_front().unwrap();
+                }
             }
-        };
-        scanner::print_token(token);
+        }
+        // destructure
+        scanner::print_token(&token); // for debugging
     }
 }

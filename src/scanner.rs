@@ -1,9 +1,8 @@
 extern crate regex;
 
+use std::collections::VecDeque;
 use regex::Regex;
 use std::io;
-
-// Scanner/lexer
 
 pub enum Token {
     // parsing logistics
@@ -33,92 +32,142 @@ pub enum Token {
     Error
 }
 
-/* Returns result of attempt to match given regex pattern to the stream
- * If no match, returns None. Otherwise, returns a string slice of the match
- * from the stream, as a Some().
- */
-fn check_match(stream: &str, re: Regex) -> Option<&str> {
-    if re.is_match(stream) {
-        return Some(re.find(stream).unwrap().as_str());
-    } else {
-        return None;
+pub struct Input {
+    pub stream: String,
+    pub history: VecDeque<Token>
+}
+
+impl Input {
+    /* Look ahead to future
+     * Helps with parsing
+     * TODO make it work
+     * TODO make declaration less hideous
+     */
+    fn look_ahead(&mut self) -> Token {
+        /* in: current stream, history list
+         * out: stream, history list (+ last item in history list???)
+         */
+        return Token::Error;
+    }
+
+    /* Empty line/tokens if error arises
+    */
+    fn flush_line(&mut self) {
+        self.stream = String::from("");
+        self.history.clear();
+    }
+
+    /* Returns result of attempt to match given regex pattern to the stream
+     * If no match, returns None. Otherwise, returns a string slice of the match
+     * from the stream, as a Some().
+     */
+    pub fn check_match(stream: &str, re: Regex) -> Option<&str> {
+        if re.is_match(stream) {
+            return Some(re.find(stream).unwrap().as_str());
+        } else {
+            return None;
+        }
+    }
+
+    /* General retriever of next token.
+     * Takes stream, a String containing line(s) of input, grabs the longest form
+     * of the first token it finds, and returns a tuple of the String sans that
+     * token as well as the corresponding Token struct.
+     *
+     * General notes:
+     *  - WhiteSpace should store length (for determining scope)
+     *  - TODO Need to work out how to raise error, and store error type
+     */
+    pub fn get_next_token(&mut self) -> Token {
+        // if string is blank, get user input, set it to stream
+        if self.stream == "" {
+            io::stdin().read_line(&mut self.stream)
+                .expect("Failed to read line");
+        }
+
+        // regex options
+        // TODO figure out how to prevent repeated compiling
+        let re_newline = Regex::new(r"^\n").unwrap();
+        let re_whitespace = Regex::new(r"^[ ]+").unwrap();
+        let re_list = Regex::new(r"^list[\n ]").unwrap();
+        let re_del = Regex::new(r"^del[\n ]").unwrap();
+        let re_exit = Regex::new(r"^exit[\n ]").unwrap();
+        let re_none = Regex::new(r"^None[\n ]").unwrap();
+        let re_variable = Regex::new(r"^[A-z][A-z0-9]*").unwrap(); 
+        let re_plus = Regex::new(r"^\+").unwrap();
+        let re_minus = Regex::new(r"^-").unwrap();
+        let re_exponent = Regex::new(r"^\*\*").unwrap();
+        let re_multiply = Regex::new(r"^\*").unwrap();
+        let re_divide = Regex::new(r"^/").unwrap();
+        let re_leftparen = Regex::new(r"^\(").unwrap();
+        let re_rightparen = Regex::new(r"^\)").unwrap();
+        let re_eq = Regex::new(r"^=").unwrap();
+        let re_float = Regex::new(r"^[0-9]+\.[0-9]*").unwrap();
+        let re_int = Regex::new(r"^[0-9]+").unwrap();
+
+        if let Some(x) = Input::check_match(&self.stream, re_newline) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::NewLine
+        } else if let Some(x) = Input::check_match(&self.stream, re_whitespace) {
+            let val: i32 = x.len() as i32;
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::WhiteSpace(val)
+        } else if let Some(x) = Input::check_match(&self.stream, re_list) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::List;
+        } else if let Some(x) = Input::check_match(&self.stream, re_del) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Del;
+        } else if let Some(x) = Input::check_match(&self.stream, re_exit) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Exit;
+        } else if let Some(x) = Input::check_match(&self.stream, re_none) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::NoneT;
+        } else if let Some(x) = Input::check_match(&self.stream, re_variable) {
+            let val = String::from(x.clone());
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Variable(val);
+        } else if let Some(x) = Input::check_match(&self.stream, re_plus) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Plus;
+        } else if let Some(x) = Input::check_match(&self.stream, re_minus) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Minus;
+        } else if let Some(x) = Input::check_match(&self.stream, re_exponent) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Exponent;
+        } else if let Some(x) = Input::check_match(&self.stream, re_multiply) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Multiply;
+        } else if let Some(x) = Input::check_match(&self.stream, re_divide) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Divide;
+        } else if let Some(x) = Input::check_match(&self.stream, re_leftparen) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::LeftParen;
+        } else if let Some(x) = Input::check_match(&self.stream, re_rightparen) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::RightParen;
+        } else if let Some(x) = Input::check_match(&self.stream, re_eq) {
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Equals;
+        } else if let Some(x) = Input::check_match(&self.stream, re_float) {
+            let val = x.parse().unwrap();
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Float(val);
+        } else if let Some(x) = Input::check_match(&self.stream, re_int) {
+            let val = x.parse().unwrap();
+            self.stream = String::from(&self.stream[x.len()..]);
+            return Token::Int(val);
+        } else {
+            self.stream = String::new();
+            return Token::Error;
+        }
     }
 }
 
-/* General retriever of next token.
- * Takes stream, a String containing line(s) of input, grabs the longest form
- * of the first token it finds, and returns a tuple of the String sans that
- * token as well as the corresponding Token struct.
- *
- * General notes:
- *  - WhiteSpace should store length (for determining scope)
- *  - TODO Need to work out how to raise error, and store error type
- */
-pub fn get_next_token(mut stream: String) -> (String, Token) {
-    // if string is blank, get user input, set it to stream
-    if stream == "" {
-        io::stdin().read_line(&mut stream)
-            .expect("Failed to read line");
-    }
 
-    // regex options
-    // TODO figure out how to prevent repeated compiling
-    let re_newline = Regex::new(r"^\n").unwrap();
-    let re_whitespace = Regex::new(r"^[ ]+").unwrap();
-    let re_list = Regex::new(r"^list[\n ]").unwrap();
-    let re_del = Regex::new(r"^del[\n ]").unwrap();
-    let re_exit = Regex::new(r"^exit[\n ]").unwrap();
-    let re_none = Regex::new(r"^None[\n ]").unwrap();
-    let re_variable = Regex::new(r"^[A-z][A-z0-9]*").unwrap(); 
-    let re_plus = Regex::new(r"^\+").unwrap();
-    let re_minus = Regex::new(r"^-").unwrap();
-    let re_exponent = Regex::new(r"^\*\*").unwrap();
-    let re_multiply = Regex::new(r"^\*").unwrap();
-    let re_divide = Regex::new(r"^/").unwrap();
-    let re_leftparen = Regex::new(r"^\(").unwrap();
-    let re_rightparen = Regex::new(r"^\)").unwrap();
-    let re_eq = Regex::new(r"^=").unwrap();
-    let re_float = Regex::new(r"^[0-9]+\.[0-9]*").unwrap();
-    let re_int = Regex::new(r"^[0-9]+").unwrap();
-
-    if let Some(x) = check_match(&stream, re_newline) {
-        return (String::from(&stream[x.len()..]), Token::NewLine);
-    } else if let Some(x) = check_match(&stream, re_whitespace) {
-        return (String::from(&stream[x.len()..]), Token::WhiteSpace(x.len() as i32));
-    } else if let Some(x) = check_match(&stream, re_list) {
-        return (String::from(&stream[x.len()..]), Token::List);
-    } else if let Some(x) = check_match(&stream, re_del) {
-        return (String::from(&stream[x.len()..]), Token::Del);
-    } else if let Some(x) = check_match(&stream, re_exit) {
-        return (String::from(&stream[x.len()..]), Token::Exit);
-    } else if let Some(x) = check_match(&stream, re_none) {
-        return (String::from(&stream[x.len()..]), Token::NoneT);
-    } else if let Some(x) = check_match(&stream, re_variable) {
-        return (String::from(&stream[x.len()..]), Token::Variable(String::from(x)));
-    } else if let Some(x) = check_match(&stream, re_plus) {
-        return (String::from(&stream[x.len()..]), Token::Plus);
-    } else if let Some(x) = check_match(&stream, re_minus) {
-        return (String::from(&stream[x.len()..]), Token::Minus);
-    } else if let Some(x) = check_match(&stream, re_exponent) {
-        return (String::from(&stream[x.len()..]), Token::Exponent);
-    } else if let Some(x) = check_match(&stream, re_multiply) {
-        return (String::from(&stream[x.len()..]), Token::Multiply);
-    } else if let Some(x) = check_match(&stream, re_divide) {
-        return (String::from(&stream[x.len()..]), Token::Divide);
-    } else if let Some(x) = check_match(&stream, re_leftparen) {
-        return (String::from(&stream[x.len()..]), Token::LeftParen);
-    } else if let Some(x) = check_match(&stream, re_rightparen) {
-        return (String::from(&stream[x.len()..]), Token::RightParen);
-    } else if let Some(x) = check_match(&stream, re_eq) {
-        return (String::from(&stream[x.len()..]), Token::Equals);
-    } else if let Some(x) = check_match(&stream, re_float) {
-        return (String::from(&stream[x.len()..]), Token::Float(x.parse().unwrap()));
-    } else if let Some(x) = check_match(&stream, re_int) {
-        return (String::from(&stream[x.len()..]), Token::Int(x.parse().unwrap()));
-    } else {
-        return (String::new(), Token::Error)
-    }
-}
 
 /* print_token - debugging utility. Prints type of supplied Token, and value
  * where relevant.
