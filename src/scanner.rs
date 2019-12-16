@@ -3,6 +3,8 @@ extern crate regex;
 use std::collections::VecDeque;
 use regex::Regex;
 use std::io;
+use std::io::Write;
+
 
 pub enum Token {
     // parsing logistics
@@ -38,15 +40,17 @@ pub struct Input {
 }
 
 impl Input {
+
     /* Look ahead to future
      * Helps with parsing
      * TODO make it work
-     * TODO make declaration less hideous
      */
     fn look_ahead(&mut self) -> Token {
         /* in: current stream, history list
          * out: stream, history list (+ last item in history list???)
          */
+        let token = self.get_next_token();
+        self.history.push_back(token);
         return Token::Error;
     }
 
@@ -81,6 +85,8 @@ impl Input {
     pub fn get_next_token(&mut self) -> Token {
         // if string is blank, get user input, set it to stream
         if self.stream == "" {
+            print!(">>> ");
+            io::stdout().flush().expect("Could not flush stdout");
             io::stdin().read_line(&mut self.stream)
                 .expect("Failed to read line");
         }
