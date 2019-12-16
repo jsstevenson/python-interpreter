@@ -43,15 +43,15 @@ impl Input {
 
     /* Look ahead to future
      * Helps with parsing
-     * TODO make it work
+     * TODO write tests
      */
-    fn look_ahead(&mut self) -> Token {
+    fn look_ahead(&mut self) -> &Token {
         /* in: current stream, history list
          * out: stream, history list (+ last item in history list???)
          */
         let token = self.get_next_token();
         self.history.push_back(token);
-        return Token::Error;
+        return &self.history.get(self.history.len()).unwrap();
     }
 
     /* Empty line/tokens if error arises
