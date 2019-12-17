@@ -2,8 +2,6 @@ extern crate regex;
 
 use std::collections::VecDeque;
 use regex::Regex;
-use std::io;
-use std::io::Write;
 
 
 pub enum Token {
@@ -36,6 +34,7 @@ pub enum Token {
 
 pub struct Input {
     pub stream: String,
+    pub current: Token,
     pub history: VecDeque<Token>
 }
 
@@ -43,7 +42,7 @@ impl Input {
 
     /* Look ahead to future
      * Helps with parsing
-     * TODO write tests
+     * TODO write tests. I do not feel confident about this one
      */
     fn look_ahead(&mut self) -> &Token {
         /* in: current stream, history list
@@ -82,7 +81,9 @@ impl Input {
      *  - WhiteSpace should store length (for determining scope)
      *  - TODO Need to work out how to raise error, and store error type
      */
-    pub fn get_next_token(&mut self) -> Token {
+    pub fn get_next_token(&mut self) -> &Token {
+        use std::io::{Write, stdin, stdout};
+
         // if string is blank, get user input, set it to stream
         if self.stream == "" {
             print!(">>> ");
@@ -113,62 +114,81 @@ impl Input {
 
         if let Some(x) = Input::check_match(&self.stream, re_newline) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::NewLine
+            self.current = Token::NewLine;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_whitespace) {
             let val: i32 = x.len() as i32;
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::WhiteSpace(val)
+            self.current = WhiteSpace(val);
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_list) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::List;
+            self.current = Token::List;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_del) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Del;
+            self.current = Token::Del;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_exit) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Exit;
+            self.current = Token::Exit;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_none) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::NoneT;
+            self.current = Token::NoneT;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_variable) {
             let val = String::from(x.clone());
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Variable(val);
+            self.current = Token::Variable(val);
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_plus) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Plus;
+            self.current = Token::Plus;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_minus) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Minus;
+            self.current = Token::Minus;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_exponent) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Exponent;
+            self.current = Token::Exponent;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_multiply) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Multiply;
+            self.current = Token::Multiply;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_divide) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Divide;
+            self.current = Token::Divide;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_leftparen) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::LeftParen;
+            self.current = Token::LeftParen;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_rightparen) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::RightParen;
+            self.current = Token::RightParen;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_eq) {
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Equals;
+            self.current = Token::Equals;
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_float) {
             let val = x.parse().unwrap();
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Float(val);
+            self.current = Token::Float(val);
+            return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_int) {
             let val = x.parse().unwrap();
             self.stream = String::from(&self.stream[x.len()..]);
-            return Token::Int(val);
+            self.current = Token::Int(val);
+            return &self.current;
         } else {
             self.stream = String::new();
-            return Token::Error;
+            self.current = Token::Error;
+            self.flush_line();
+            return &self.current;
         }
     }
 }
