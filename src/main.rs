@@ -1,6 +1,7 @@
 pub mod scanner;
 use std::collections::{VecDeque, HashMap};
 
+#[derive(Clone, Debug)]
 enum Type {
     Int,
     Float,
@@ -8,6 +9,7 @@ enum Type {
     Var
 }
 
+#[derive(Clone, Debug)]
 enum Value {
     Int(i64),
     Float(f64),
@@ -21,6 +23,7 @@ enum Value {
  * data, and "Type" should hold information for interpreting that data.
  * IE, value should just be some raw bits, and value tells us how to read them
  */
+#[derive(Clone, Debug)]
 struct Data {
     type_meta: Type,
     value_meta: Value
@@ -51,17 +54,17 @@ fn parse_statement(input: &scanner::Input, state: &State) -> Value {
     }
 }
 
-fn parse_exit(input: &scanner::Input, state: &State) -> Value {
+fn parse_exit(_input: &scanner::Input, _state: &State) -> Value {
     // TODO think about this
     return Value::Error;
 }
 
-fn parse_list(input: &scanner::Input, state: &State) -> Value {
+fn parse_list(_input: &scanner::Input, _state: &State) -> Value {
     // TODO probably remove
     return Value::Error;
 }
 
-fn parse_clear(input: &scanner::Input, state: &State) -> Value {
+fn parse_clear(_input: &scanner::Input, _state: &State) -> Value {
     // TODO think about this
     return Value::Error;
 }
@@ -70,20 +73,20 @@ fn parse_clear(input: &scanner::Input, state: &State) -> Value {
  * TODO
  *  * Figure out how to deal w/ multiline functions/statements/expressions
  */
-fn parse_newline(input: &scanner::Input, state: &State) -> Value {
+fn parse_newline(input: &scanner::Input, _state: &State) -> Value {
     // consume token
     input.get_next_token();
     return Value::Terminator;
 }
 
 fn parse_assign(input: &scanner::Input, state: &State) -> Value {
-    if let scanner::Token::Variable(name) = input.current {
+    if let scanner::Token::Variable(name) = &input.current {
         input.get_next_token();
         let data = Data {
             type_meta: Type::Int, // TODO gotta update
             value_meta: parse_statement(input, state)
         };
-        state.vars.insert(name, data);
+        state.vars.insert(String::from(name), data.clone());;
         return data.value_meta;
     } else {
         return Value::Error;
@@ -213,7 +216,7 @@ fn parse_var(input: &scanner::Input, state: &State) -> Value {
     }
 }
 
-fn parse_int(input: &scanner::Input, state: &State) -> Value {
+fn parse_int(input: &scanner::Input, _state: &State) -> Value {
     if let scanner::Token::Int(val) = input.current {
         return Value::Int(val);
     } else {
@@ -221,7 +224,7 @@ fn parse_int(input: &scanner::Input, state: &State) -> Value {
     }
 }
 
-fn parse_float(input: &scanner::Input, state: &State) -> Value {
+fn parse_float(input: &scanner::Input, _state: &State) -> Value {
     if let scanner::Token::Float(val) = input.current {
         return Value::Float(val);
     } else {

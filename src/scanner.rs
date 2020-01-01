@@ -1,9 +1,10 @@
 extern crate regex;
 
+use std::io::{Write, stdin, stdout};
 use std::collections::VecDeque;
 use regex::Regex;
 
-
+#[derive(Clone, Debug)]
 pub enum Token {
     // parsing logistics
     NewLine,
@@ -25,7 +26,7 @@ pub enum Token {
     Equals,
     // numbers
     Float(f64),
-    Int(u64),
+    Int(i64),
     // variables
     Variable(String),
     // errors
@@ -40,24 +41,20 @@ pub struct Input {
 
 impl Input {
 
-    /* Look ahead to future
-     * Helps with parsing
-     * TODO write tests. I do not feel confident about this one
-     */
-    fn look_ahead(&mut self) -> &Token {
-        /* in: current stream, history list
-         * out: stream, history list (+ last item in history list???)
-         */
-        let token = self.get_next_token();
-        self.history.push_back(token);
-        return &self.history.get(self.history.len()).unwrap();
-    }
-
     /* Empty line/tokens if error arises
     */
     fn flush_line(&mut self) {
         self.stream = String::from("");
         self.history.clear();
+    }
+
+    /* Look ahead to future. Assists parsing.
+     * TODO write tests. I do not feel confident about this one
+     */
+    pub fn look_ahead(&mut self) -> &Token {
+        let token = self.get_next_token();
+        self.history.push_back(token.clone());
+        return &self.history.get(self.history.len()).unwrap();
     }
 
     /* Returns result of attempt to match given regex pattern to the stream
@@ -72,6 +69,10 @@ impl Input {
         }
     }
 
+    fn match_token(&mut self) -> (&Token, i32) {
+
+    }
+
     /* General retriever of next token.
      * Takes stream, a String containing line(s) of input, grabs the longest form
      * of the first token it finds, and returns a tuple of the String sans that
@@ -82,13 +83,12 @@ impl Input {
      *  - TODO Need to work out how to raise error, and store error type
      */
     pub fn get_next_token(&mut self) -> &Token {
-        use std::io::{Write, stdin, stdout};
 
         // if string is blank, get user input, set it to stream
         if self.stream == "" {
             print!(">>> ");
-            io::stdout().flush().expect("Could not flush stdout");
-            io::stdin().read_line(&mut self.stream)
+            stdout().flush().expect("Could not flush stdout");
+            stdin().read_line(&mut self.stream)
                 .expect("Failed to read line");
         }
 
@@ -119,7 +119,7 @@ impl Input {
         } else if let Some(x) = Input::check_match(&self.stream, re_whitespace) {
             let val: i32 = x.len() as i32;
             self.stream = String::from(&self.stream[x.len()..]);
-            self.current = WhiteSpace(val);
+            self.current = Token::WhiteSpace(val);
             return &self.current;
         } else if let Some(x) = Input::check_match(&self.stream, re_list) {
             self.stream = String::from(&self.stream[x.len()..]);
@@ -190,33 +190,5 @@ impl Input {
             self.flush_line();
             return &self.current;
         }
-    }
-}
-
-
-
-/* print_token - debugging utility. Prints type of supplied Token, and value
- * where relevant.
- */
-pub fn print_token(token: &Token) {
-    match token {
-        Token::NewLine => println!("newline"),
-        Token::WhiteSpace(len) => println!("whitespace length: {}", len),
-        Token::List => println!("list"),
-        Token::Del => println!("Delete"),
-        Token::Exit => println!("Exit"),
-        Token::NoneT => println!("NoneType"),
-        Token::Plus => println!("Plus"),
-        Token::Minus => println!("Minus"),
-        Token::Exponent => println!("Exponent"),
-        Token::Multiply => println!("Multiply"),
-        Token::Divide => println!("Divide"),
-        Token::LeftParen => println!("Left Paren"),
-        Token::RightParen => println!("Right Paren"),
-        Token::Equals => println!("Equals"),
-        Token::Float(val) => println!("Float: {}", val),
-        Token::Int(val) => println!("Int: {}", val),
-        Token::Variable(name) => println!("Variable name: {}", name),
-        Token::Error => println!("Error"),
     }
 }
