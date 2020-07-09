@@ -10,8 +10,10 @@ Python interpreter, written in Rust. Incredibly slow and inefficient (for now?).
 * ensure no recompile of regex patterns
 * think about where to store unit tests
 * how to raise syntax errors//how they should be typed
-   * particularly whitespace
+* whitespace
+   * had been handling w/ pure regex but may need to adjust grammar
 * attempt a rewrite of pattern matching
+* need composite assignment/operator units
 
 ### main.rs
 
@@ -20,4 +22,4 @@ Python interpreter, written in Rust. Incredibly slow and inefficient (for now?).
 * implement Exit, List, Clear keywords
 * Update parse_newline() to handle multiline statements
 * update parse_var to raise NameError on var not found
-* add sqrt and negative numbers to parse_factor
+* add negative numbers to parse_factor
