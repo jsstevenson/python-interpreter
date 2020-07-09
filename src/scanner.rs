@@ -1,67 +1,113 @@
 extern crate regex;
 
-use std::io::{Write, stdin, stdout};
-use std::collections::VecDeque;
 use regex::Regex;
+use std::collections::VecDeque;
+use std::io::{stdin, stdout, Write}; // TODO double check necessary
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
+#[allow(dead_code)]
 pub enum Token {
-    // parsing logistics
-    NewLine,
-    WhiteSpace(i32),
-    // keywords
+    SyntaxError,
     List,
-    Del,
     Exit,
-    NoneT,
-    // operators
-    Plus,
-    Minus,
-    Exponent,
-    Multiply,
-    Divide,
-    // organizing, etc
-    LeftParen,
-    RightParen,
-    Equals,
-    // numbers
+    // values (WIP)
     Float(f64),
     Int(i64),
     // variables
     Variable(String),
-    // errors
-    Error
+    // misc - could easily move to terminals
+    WhiteSpace(usize),
+    // for parsing logistics
+    NewLine,
+    // operators
+    Plus,
+    Minus,
+    Multiply,
+    Divide,
+    Exponent,
+    // organization
+    Equals,
+    OpenParen,
+    CloseParen,
+    OpenBracket,
+    CloseBracket,
+    OpenBrace,
+    CloseBrace,
+    SingleQuote,
+    DoubeleQuote,
+    Colon,
+    // functions and classes, etc
+    Def,
+    Return,
+    Lambda,
+    With,
+    As,
+    Class,
+    // assertions/tries
+    Try,
+    Except,
+    Raise,
+    // loops and iterations
+    For,
+    In,
+    While,
+    Continue,
+    Pass,
+    Break,
+    Finally,
+    Yield,
+    // importation
+    FromImport,
+    Import,
+    // Boolean and related
+    If,
+    Elif,
+    Else,
+    True,
+    False,
+    Is,
+    And,
+    Not,
+    Or,
+    // Misc
+    NoneT,
+    Async,
+    Assert,
+    Await,
+    Del,
+    Global,
+    Nonlocal,
 }
 
+#[derive(Debug)]
+pub struct RegexMatch {
+    token: Token,
+    token_len: usize,
+}
+
+/* Basic input struct. Holds current input remaining to be parsed, as well as
+ * a basic history deque in case of lookahead
+ */
+#[derive(Debug)]
 pub struct Input {
     pub stream: String,
     pub current: Token,
-    pub history: VecDeque<Token>
+    pub history: VecDeque<Token>,
 }
 
 impl Input {
-
-    /* Empty line/tokens if error arises
-    */
+    /* for bailing out when errors arise
+     */
     fn flush_line(&mut self) {
         self.stream = String::from("");
         self.history.clear();
     }
 
-    /* Look ahead to future. Assists parsing.
-     * TODO write tests. I do not feel confident about this one
+    /* Returns result of attempt to match given regex pattern to the stream.
+     * If no match, returns None; otherwise, returns a string slice of the match
+     * from the stream
      */
-    pub fn look_ahead(&mut self) -> &Token {
-        let token = self.get_next_token();
-        self.history.push_back(token.clone());
-        return &self.history.get(self.history.len()).unwrap();
-    }
-
-    /* Returns result of attempt to match given regex pattern to the stream
-     * If no match, returns None. Otherwise, returns a string slice of the match
-     * from the stream, as a Some().
-     */
-    pub fn check_match(stream: &str, re: Regex) -> Option<&str> {
+    fn check_match(stream: &str, re: Regex) -> Option<&str> {
         if re.is_match(stream) {
             return Some(re.find(stream).unwrap().as_str());
         } else {
@@ -69,126 +115,187 @@ impl Input {
         }
     }
 
-    fn match_token(&mut self) -> (&Token, i32) {
-
-    }
-
-    /* General retriever of next token.
-     * Takes stream, a String containing line(s) of input, grabs the longest form
-     * of the first token it finds, and returns a tuple of the String sans that
-     * token as well as the corresponding Token struct.
-     *
-     * General notes:
-     *  - WhiteSpace should store length (for determining scope)
-     *  - TODO Need to work out how to raise error, and store error type
-     */
-    pub fn get_next_token(&mut self) -> &Token {
-
-        // if string is blank, get user input, set it to stream
-        if self.stream == "" {
-            print!(">>> ");
-            stdout().flush().expect("Could not flush stdout");
-            stdin().read_line(&mut self.stream)
-                .expect("Failed to read line");
-        }
-
+    pub fn re_match(&mut self) -> RegexMatch {
         // regex options
-        // TODO figure out how to prevent repeated compiling
         let re_newline = Regex::new(r"^\n").unwrap();
         let re_whitespace = Regex::new(r"^[ ]+").unwrap();
-        let re_list = Regex::new(r"^list[\n ]").unwrap();
         let re_del = Regex::new(r"^del[\n ]").unwrap();
         let re_exit = Regex::new(r"^exit[\n ]").unwrap();
+        let re_list = Regex::new(r"^list[\n ]").unwrap();
         let re_none = Regex::new(r"^None[\n ]").unwrap();
-        let re_variable = Regex::new(r"^[A-z][A-z0-9]*").unwrap(); 
+        let re_variable = Regex::new(r"^[A-z][A-z0-9]*").unwrap();
         let re_plus = Regex::new(r"^\+").unwrap();
         let re_minus = Regex::new(r"^-").unwrap();
         let re_exponent = Regex::new(r"^\*\*").unwrap();
         let re_multiply = Regex::new(r"^\*").unwrap();
         let re_divide = Regex::new(r"^/").unwrap();
-        let re_leftparen = Regex::new(r"^\(").unwrap();
-        let re_rightparen = Regex::new(r"^\)").unwrap();
+        let re_openparen = Regex::new(r"^\(").unwrap();
+        let re_closeparen = Regex::new(r"^\)").unwrap();
         let re_eq = Regex::new(r"^=").unwrap();
         let re_float = Regex::new(r"^[0-9]+\.[0-9]*").unwrap();
         let re_int = Regex::new(r"^[0-9]+").unwrap();
 
-        if let Some(x) = Input::check_match(&self.stream, re_newline) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::NewLine;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_whitespace) {
-            let val: i32 = x.len() as i32;
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::WhiteSpace(val);
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_list) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::List;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_del) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Del;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_exit) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Exit;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_none) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::NoneT;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_variable) {
-            let val = String::from(x.clone());
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Variable(val);
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_plus) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Plus;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_minus) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Minus;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_exponent) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Exponent;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_multiply) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Multiply;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_divide) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Divide;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_leftparen) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::LeftParen;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_rightparen) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::RightParen;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_eq) {
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Equals;
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_float) {
-            let val = x.parse().unwrap();
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Float(val);
-            return &self.current;
-        } else if let Some(x) = Input::check_match(&self.stream, re_int) {
-            let val = x.parse().unwrap();
-            self.stream = String::from(&self.stream[x.len()..]);
-            self.current = Token::Int(val);
-            return &self.current;
+        if let Some(_) = Input::check_match(&self.stream, re_newline) {
+            return RegexMatch {
+                token: Token::NewLine,
+                token_len: 1,
+            };
+        } else if let Some(whitespace) = Input::check_match(&self.stream, re_whitespace) {
+            let len: usize = whitespace.len();
+            return RegexMatch {
+                token: Token::WhiteSpace(len),
+                token_len: len,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_del) {
+            return RegexMatch {
+                token: Token::NewLine,
+                token_len: 3,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_exit) {
+            return RegexMatch {
+                token: Token::Exit,
+                token_len: 4,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_list) {
+            return RegexMatch {
+                token: Token::List,
+                token_len: 4,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_none) {
+            return RegexMatch {
+                token: Token::NoneT,
+                token_len: 4,
+            };
+        } else if let Some(name) = Input::check_match(&self.stream, re_variable) {
+            let name_clone = String::from(name.clone());
+            let name_clone_len = name_clone.len();
+            return RegexMatch {
+                token: Token::Variable(name_clone),
+                token_len: name_clone_len,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_plus) {
+            return RegexMatch {
+                token: Token::Plus,
+                token_len: 1,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_minus) {
+            return RegexMatch {
+                token: Token::Minus,
+                token_len: 1,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_exponent) {
+            return RegexMatch {
+                token: Token::Exponent,
+                token_len: 2,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_multiply) {
+            return RegexMatch {
+                token: Token::Multiply,
+                token_len: 1,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_divide) {
+            return RegexMatch {
+                token: Token::Divide,
+                token_len: 1,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_openparen) {
+            return RegexMatch {
+                token: Token::OpenParen,
+                token_len: 1,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_closeparen) {
+            return RegexMatch {
+                token: Token::CloseParen,
+                token_len: 1,
+            };
+        } else if let Some(_) = Input::check_match(&self.stream, re_eq) {
+            return RegexMatch {
+                token: Token::Equals,
+                token_len: 1,
+            };
+        } else if let Some(val) = Input::check_match(&self.stream, re_float) {
+            let val_parsed = val.parse().unwrap();
+            return RegexMatch {
+                token: Token::Float(val_parsed),
+                token_len: val.len(),
+            };
+        } else if let Some(val) = Input::check_match(&self.stream, re_int) {
+            let val_parsed = val.parse().unwrap();
+            return RegexMatch {
+                token: Token::Int(val_parsed),
+                token_len: val.len(),
+            };
         } else {
-            self.stream = String::new();
-            self.current = Token::Error;
-            self.flush_line();
-            return &self.current;
+            return RegexMatch {
+                token: Token::SyntaxError,
+                token_len: 0,
+            };
         }
     }
+
+    /* Look ahead - assists w/ parsing
+     *
+     */
+    pub fn look_ahead(&mut self) -> &Token {
+        // get next token
+        // add to history, not current
+        // update stream accordingly
+
+        // get first match
+        let next_token_match: RegexMatch = self.re_match();
+
+        // update current, stream
+        match next_token_match.token {
+            Token::SyntaxError => {
+                self.history.push_back(next_token_match.token);
+                self.flush_line();
+            }
+            _ => {
+                self.history.push_back(next_token_match.token);
+                self.stream = String::from(&self.stream[next_token_match.token_len..]);
+            }
+        };
+
+        return &self.history.get(self.history.len()).unwrap();
+    }
+
+    /* Get next token. Either pop from history queue, or consume next token
+     * from input stream.
+     *
+     * Updates self.current and returns the new current token as a borrow
+     */
+    pub fn get_next_token(&mut self) -> &Token {
+        if !self.history.is_empty() {
+            self.current = self.history.pop_front().unwrap();
+            return &self.current;
+        }
+
+        // if stream blank, get user input
+        if self.stream == "" {
+            print!(">> ");
+            stdout().flush().expect("Could not flush stdout");
+            stdin()
+                .read_line(&mut self.stream)
+                .expect("Failed to read line");
+        }
+
+        // get first match
+        let next_token_match: RegexMatch = self.re_match();
+
+        // update current, stream
+        match next_token_match.token {
+            Token::SyntaxError => {
+                self.current = next_token_match.token;
+                self.flush_line();
+            }
+            _ => {
+                self.stream = String::from(&self.stream[next_token_match.token_len..]);
+                self.current = next_token_match.token;
+            }
+        }
+
+        return &self.current;
+    }
 }
+
+
