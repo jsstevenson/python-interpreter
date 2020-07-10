@@ -256,7 +256,7 @@ impl Input {
             }
         };
 
-        return &self.history.get(self.history.len()).unwrap();
+        return &self.history.back().unwrap();
     }
 
     /* Get next token. Either pop from history queue, or consume next token
