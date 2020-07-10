@@ -19,6 +19,7 @@ enum Value {
     Terminator,
     Exit,
     Error,
+    NotImplementedError,
 }
 
 #[derive(Debug)]
@@ -64,9 +65,6 @@ impl Parser {
      * TODO think about utility of epsilon
      */
     fn parse_statement(&mut self) -> Value {
-        println!("parsing {:?}...", "statement");
-        println!("stream is: {:?}", self.input.stream);
-        println!("current token is {:?}", self.input.current);
         match self.input.current {
             scanner::Token::Exit => self.parse_exit(),
             scanner::Token::List => self.parse_list(),
@@ -75,7 +73,7 @@ impl Parser {
                 _ => self.parse_expression(),
             },
         };
-        return Value::Error;
+        return Value::NotImplementedError;
     }
 
     fn parse_exit(&mut self) -> Value {
@@ -84,7 +82,7 @@ impl Parser {
     }
 
     fn parse_list(&mut self) -> Value {
-        return Value::Error;
+        return Value::NotImplementedError;
     }
 
     fn parse_assign(&mut self) -> Value {
@@ -179,7 +177,7 @@ impl Parser {
                 let power: Value = self.parse_power();
 
                 // TODO: implement exponent function
-                return Value::Error;
+                return Value::NotImplementedError;
             }
             _ => return factor,
         };
@@ -198,7 +196,7 @@ impl Parser {
     }
 
     fn parse_var_ref(&mut self) -> Value {
-        return Value::Error;
+        return Value::NotImplementedError;
     }
 
     /* number ::= int | float
