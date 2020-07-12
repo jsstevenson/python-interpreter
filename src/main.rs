@@ -45,7 +45,7 @@ impl Parser {
         return Value::Terminator;
     }
 
-    /* program ::= statement | program statement
+    /* program ::= exit | list | statement | program statement
      *
      */
     fn parse_program(&mut self) {
@@ -56,24 +56,21 @@ impl Parser {
             println!("{:?}", self.input.current); // for debugging
 
             // parse
-            let value: Value = self.parse_statement();
-            println!("{:?}", value);
-        }
-    }
+            match self.input.current {
+                scanner::Token::Exit => break,
+                scanner::Token::List => {
+                    self.parse_list();
+                },
+                _ => {
+                    let value: Value = self.parse_statement();
+                    match value {
+                        Value::Exit => break,
+                        _ => println!("{:?}", value)
+                    }
+                }
 
-    /* statement ::= expr | id = expr | list | exit | epsilon
-     * TODO think about utility of epsilon
-     */
-    fn parse_statement(&mut self) -> Value {
-        match self.input.current {
-            scanner::Token::Exit => self.parse_exit(),
-            scanner::Token::List => self.parse_list(),
-            _ => match self.input.look_ahead() {
-                scanner::Token::Equals => self.parse_assign(),
-                _ => self.parse_expression(),
-            },
-        };
-        return Value::NotImplementedError;
+            };
+        }
     }
 
     fn parse_exit(&mut self) -> Value {
@@ -83,6 +80,24 @@ impl Parser {
 
     fn parse_list(&mut self) -> Value {
         return Value::NotImplementedError;
+    }
+
+    /* statement ::= expr | id | id = expr | epsilon
+     * TODO think about utility of epsilon
+     * TODO think about how to terminate successfully
+     * TODO thinking about incomplete lines - currently, trying to allow for
+     * just a single var, but need to enable different incomplete statements to
+     * prompt on a newline for completion
+     */
+    fn parse_statement(&mut self) -> Value {
+        match self.input.current {
+            scanner::Token::Exit => return self.parse_exit(),
+            scanner::Token::List => return self.parse_list(),
+            _ => match self.input.look_ahead() {
+                scanner::Token::Equals => return self.parse_assign(),
+                _ => return self.parse_expression(),
+            },
+        };
     }
 
     fn parse_assign(&mut self) -> Value {
@@ -241,7 +256,7 @@ impl Parser {
     }
 
     /* for debugging/etc - simply repeats tokens back to user, 1 per line
-     */
+    */
     #[allow(dead_code)]
     fn repeat_tokens(&mut self) {
         loop {
