@@ -88,6 +88,10 @@ impl Parser {
         }
     }
 
+    /* currently unused -
+     * thinking about logging functions etc
+     */
+    #[allow(dead_code)]
     fn parse_exit(&mut self) -> Value {
         self.input.get_next_token();
         return Value::Exit;
@@ -106,13 +110,14 @@ impl Parser {
      */
     fn parse_statement(&mut self) -> Value {
         match self.input.current {
-            scanner::Token::Exit => return self.parse_exit(),
-            scanner::Token::List => return self.parse_list(),
-            _ => match self.input.look_ahead() {
-                scanner::Token::Equals => return self.parse_assign(),
-                _ => return self.parse_expression(),
+            scanner::Token::Variable(_) => {
+                match self.input.look_ahead(true) {
+                    scanner::Token::Equals => return self.parse_assign(),
+                    _ => return self.parse_var_ref(),
+                }
             },
-        };
+            _ => return self.parse_expression(),
+        }
     }
 
     fn parse_assign(&mut self) -> Value {

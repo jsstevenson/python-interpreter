@@ -235,14 +235,20 @@ impl Input {
 
     /* Look ahead - assists w/ parsing
      *
+     * ignore_whitespace: if true, consumes + skips whitespace
      */
-    pub fn look_ahead(&mut self) -> &Token {
-        // get next token
-        // add to history, not current
-        // update stream accordingly
+    pub fn look_ahead(&mut self, ignore_whitespace: bool) -> &Token {
+        let mut next_token_match: RegexMatch = self.re_match();
 
-        // get first match
-        let next_token_match: RegexMatch = self.re_match();
+        if ignore_whitespace {
+            match next_token_match.token {
+                Token::WhiteSpace(_) => {
+                    self.stream = String::from(&self.stream[next_token_match.token_len..]);
+                    next_token_match = self.re_match();
+                },
+                _ => (),
+            }
+        }
 
         // update current, stream
         match next_token_match.token {
@@ -266,6 +272,7 @@ impl Input {
      */
     pub fn get_next_token(&mut self) -> &Token {
         if !self.history.is_empty() {
+            println!("Getting from history");
             self.current = self.history.pop_front().unwrap();
             return &self.current;
         }
@@ -297,5 +304,3 @@ impl Input {
         return &self.current;
     }
 }
-
-
