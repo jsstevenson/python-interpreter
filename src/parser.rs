@@ -64,11 +64,9 @@ impl Parser {
      *
      */
     pub fn parse_program(&mut self) {
-        println!("{:?}", &self.input.stream);
         loop {
             // update current token
             self.input.get_next_token();
-            println!("{:?}", self.input.current); // for debugging
 
             // parse
             match self.input.current {
@@ -80,7 +78,7 @@ impl Parser {
                     let value: Value = self.parse_statement();
                     match value {
                         Value::Exit => break,
-                        _ => println!("{:?}", value)
+                        _ => println!("Result: {:?}", value)
                     }
                 }
 
@@ -150,8 +148,14 @@ impl Parser {
     fn parse_expression(&mut self) -> Value {
         let mut return_value = self.parse_term();
         loop {
-            match self.input.current {
+            match &self.input.current {
+                scanner::Token::WhiteSpace(_) => {
+                    // println!("parse_expr consume whitespace");
+                    self.input.get_next_token(); // consume whitespace
+                    // println!("current is now {:?}", &self.input.current);
+                }
                 scanner::Token::Plus => {
+                    // println!("handling plus");
                     self.input.get_next_token();
                     if let Value::Int(val_int) = return_value {
                         if let Value::Int(val_parsed) = self.parse_term() {
@@ -212,7 +216,7 @@ impl Parser {
                 return factor;
             }
             scanner::Token::Exponent => {
-                self.parse_factor(); // consume operator
+                self.input.get_next_token(); // consume operator
                 let power: Value = self.parse_power();
                 if let Value::Int(base_int) = factor {
                     if let Value::Int(power_int) = power {
