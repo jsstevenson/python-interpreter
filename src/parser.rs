@@ -40,7 +40,7 @@ pub struct Parser {
 
 impl Parser {
     pub fn build_new() -> Parser {
-        let mut parser = Parser {
+        let parser = Parser {
             input: scanner::Input {
                 stream: String::from(""),
                 current: scanner::Token::NewLine,
@@ -51,17 +51,6 @@ impl Parser {
             },
         };
         return parser;
-        /*
-        let mut parser = parser::Parser {
-        input: scanner::Input {
-            stream: String::from(""),
-            current: scanner::Token::NewLine,
-            history: VecDeque::new(),
-        },
-        state: parser::State {
-            vars: HashMap::new(),
-        },
-    */
     }
 
     #[allow(dead_code)]
@@ -209,16 +198,27 @@ impl Parser {
     }
 
     /* power ::= factor | factor ** power
-     *
+     * TODO handle floats
      */
     fn parse_power(&mut self) -> Value {
         let factor: Value = self.parse_factor();
         match self.input.current {
+            scanner::Token::NewLine => {
+                return factor;
+            }
             scanner::Token::Exponent => {
+                self.parse_factor(); // consume operator
                 let power: Value = self.parse_power();
-
-                // TODO: implement exponent function
-                return Value::NotImplementedError;
+                if let Value::Int(base_int) = factor {
+                    if let Value::Int(power_int) = power {
+                        let total: u32 = power_int as u32; // TODO should make this panic
+                        match base_int.checked_pow(total) {
+                            Some(pow) => return Value::Int(pow),
+                            _ => return Value::Error
+                        };
+                    }
+                }
+                return Value::Error;
             }
             _ => return factor,
         };
