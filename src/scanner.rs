@@ -268,9 +268,11 @@ impl Input {
     /* Get next token. Either pop from history queue, or consume next token
      * from input stream.
      *
+     * skip_whitespace: if true, consume + skip whitespace
+     *
      * Updates self.current and returns the new current token as a borrow
      */
-    pub fn get_next_token(&mut self) -> &Token {
+    pub fn get_next_token(&mut self, skip_whitespace: bool) -> &Token {
         if !self.history.is_empty() {
             println!("Getting from history");
             self.current = self.history.pop_front().unwrap();
@@ -298,6 +300,15 @@ impl Input {
             _ => {
                 self.stream = String::from(&self.stream[next_token_match.token_len..]);
                 self.current = next_token_match.token;
+            }
+        }
+
+        if skip_whitespace {
+            match &self.current {
+                Token::WhiteSpace(_) => {
+                    self.get_next_token(false);
+                },
+                _ => ()
             }
         }
 

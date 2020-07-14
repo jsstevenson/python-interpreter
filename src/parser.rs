@@ -56,7 +56,7 @@ impl Parser {
     #[allow(dead_code)]
     fn parse_newline(&mut self) -> Value {
         // consume token
-        self.input.get_next_token();
+        self.input.get_next_token(true);
         return Value::Terminator;
     }
 
@@ -66,7 +66,7 @@ impl Parser {
     pub fn parse_program(&mut self) {
         loop {
             // update current token
-            self.input.get_next_token();
+            self.input.get_next_token(true);
 
             // parse
             match self.input.current {
@@ -91,7 +91,7 @@ impl Parser {
      */
     #[allow(dead_code)]
     fn parse_exit(&mut self) -> Value {
-        self.input.get_next_token();
+        self.input.get_next_token(true);
         return Value::Exit;
     }
 
@@ -125,8 +125,8 @@ impl Parser {
         } else {
             return Value::Error;
         }
-        self.input.get_next_token();
-        self.input.get_next_token();
+        self.input.get_next_token(true);
+        self.input.get_next_token(true);
         let var_value = self.parse_expression();
         let var_type: Type;
         match var_value {
@@ -149,14 +149,16 @@ impl Parser {
         let mut return_value = self.parse_term();
         loop {
             match &self.input.current {
+                /*
                 scanner::Token::WhiteSpace(_) => {
                     // println!("parse_expr consume whitespace");
-                    self.input.get_next_token(); // consume whitespace
+                    self.input.get_next_token(true); // consume whitespace
                     // println!("current is now {:?}", &self.input.current);
                 }
+                */
                 scanner::Token::Plus => {
                     // println!("handling plus");
-                    self.input.get_next_token();
+                    self.input.get_next_token(true);
                     if let Value::Int(val_int) = return_value {
                         if let Value::Int(val_parsed) = self.parse_term() {
                             return_value = Value::Int(val_int + val_parsed);
@@ -164,7 +166,7 @@ impl Parser {
                     }
                 }
                 scanner::Token::Minus => {
-                    self.input.get_next_token();
+                    self.input.get_next_token(true);
                     if let Value::Int(val_int) = return_value {
                         if let Value::Int(val_parsed) = self.parse_term() {
                             return_value = Value::Int(val_int + val_parsed);
@@ -185,7 +187,7 @@ impl Parser {
         loop {
             match self.input.current {
                 scanner::Token::Multiply => {
-                    self.input.get_next_token();
+                    self.input.get_next_token(true);
                     if let Value::Int(val_int) = return_value {
                         if let Value::Int(val_parsed) = self.parse_power() {
                             return_value = Value::Int(val_int * val_parsed);
@@ -193,7 +195,7 @@ impl Parser {
                     }
                 }
                 scanner::Token::Divide => {
-                    self.input.get_next_token();
+                    self.input.get_next_token(true);
                     if let Value::Int(val_int) = return_value {
                         if let Value::Int(val_parsed) = self.parse_power() {
                             return_value = Value::Int(val_int / val_parsed);
@@ -216,7 +218,7 @@ impl Parser {
                 return factor;
             }
             scanner::Token::Exponent => {
-                self.input.get_next_token(); // consume operator
+                self.input.get_next_token(true); // consume operator
                 let power: Value = self.parse_power();
                 if let Value::Int(base_int) = factor {
                     if let Value::Int(power_int) = power {
@@ -257,7 +259,7 @@ impl Parser {
             scanner::Token::Int(_) => return self.parse_int(),
             scanner::Token::Float(_) => return self.parse_float(),
             _ => {
-                self.input.get_next_token();
+                self.input.get_next_token(true);
                 return Value::Error;
             }
         };
@@ -265,28 +267,28 @@ impl Parser {
 
     fn parse_int(&mut self) -> Value {
         if let scanner::Token::Int(val) = self.input.current {
-            self.input.get_next_token();
+            self.input.get_next_token(true);
             return Value::Int(val);
         } else {
-            self.input.get_next_token();
+            self.input.get_next_token(true);
             return Value::Error;
         }
     }
 
     fn parse_float(&mut self) -> Value {
         if let scanner::Token::Float(val) = self.input.current {
-            self.input.get_next_token();
+            self.input.get_next_token(true);
             return Value::Float(val);
         } else {
-            self.input.get_next_token();
+            self.input.get_next_token(true);
             return Value::Error;
         }
     }
 
     fn parse_parens(&mut self) -> Value {
-        self.input.get_next_token(); // consume "("
+        self.input.get_next_token(true); // consume "("
         let value: Value = self.parse_expression();
-        self.input.get_next_token(); // consume ")"
+        self.input.get_next_token(true); // consume ")"
         return value;
     }
 
@@ -295,7 +297,7 @@ impl Parser {
     #[allow(dead_code)]
     fn repeat_tokens(&mut self) {
         loop {
-            let token = self.input.get_next_token();
+            let token = self.input.get_next_token(true);
             println!("{:?}", token);
         }
     }
