@@ -11,7 +11,7 @@ enum Type {
     Var,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 enum Value {
     Int(i64),
@@ -21,6 +21,7 @@ enum Value {
     Exit,
     Error,
     NotImplementedError,
+    NameError,
 }
 
 #[derive(Debug)]
@@ -99,7 +100,7 @@ impl Parser {
         return Value::NotImplementedError;
     }
 
-    /* statement ::= expr | id | id = expr | epsilon
+    /* statement ::= expr | var_ref | var = expr | epsilon
      * TODO think about utility of epsilon
      * TODO think about how to terminate successfully
      * TODO thinking about incomplete lines - currently, trying to allow for
@@ -248,7 +249,17 @@ impl Parser {
     }
 
     fn parse_var_ref(&mut self) -> Value {
-        return Value::NotImplementedError;
+        match &self.input.current {
+            scanner::Token::Variable(name) => {
+                match self.state.vars.get(name) {
+                    Some(data) => {
+                        return data.value_meta.clone();
+                    },
+                    _ => return Value::NameError,
+                }
+            },
+            _ => return Value::Error,
+        };
     }
 
     /* number ::= int | float
