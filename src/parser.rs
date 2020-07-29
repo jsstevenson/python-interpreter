@@ -61,7 +61,7 @@ impl Parser {
         return Value::Terminator;
     }
 
-    /* program ::= exit | list | statement | program statement
+    /* program ::= exit | state | statement | program statement
      *
      */
     pub fn parse_program(&mut self) {
@@ -72,9 +72,12 @@ impl Parser {
             // parse
             match self.input.current {
                 scanner::Token::Exit => break,
-                scanner::Token::List => {
-                    self.parse_list();
+                scanner::Token::State => {
+                    self.parse_state();
                 },
+                scanner::Token::NewLine => {
+                    self.parse_newline();
+                }
                 _ => {
                     let value: Value = self.parse_statement();
                     match value {
@@ -96,8 +99,18 @@ impl Parser {
         return Value::Exit;
     }
 
-    fn parse_list(&mut self) -> Value {
-        return Value::NotImplementedError;
+    /* debugging function
+     * display current state
+     */
+    fn parse_state(&mut self) -> Value {
+        // consume token
+        self.input.get_next_token(true);
+        println!("current state:");
+        for (key, value) in &self.state.vars {
+            println!("{}: {:?}", key, value);
+        }
+        println!("current stream: {:?}", self.input.stream);
+        return Value::Terminator;
     }
 
     /* statement ::= expr | var_ref | var = expr | epsilon
@@ -249,16 +262,21 @@ impl Parser {
     }
 
     fn parse_var_ref(&mut self) -> Value {
-        match &self.input.current {
+        let var = self.input.current.clone();
+        match var {
             scanner::Token::Variable(name) => {
-                match self.state.vars.get(name) {
+                self.input.get_next_token(true);
+                match self.state.vars.get(&name) {
                     Some(data) => {
                         return data.value_meta.clone();
                     },
                     _ => return Value::NameError,
                 }
             },
-            _ => return Value::Error,
+            _ => {
+                    self.input.get_next_token(true);
+                    return Value::Error;
+            },
         };
     }
 

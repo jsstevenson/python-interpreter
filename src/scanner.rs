@@ -4,11 +4,11 @@ use regex::Regex;
 use std::collections::VecDeque;
 use std::io::{stdin, stdout, Write}; // TODO double check necessary
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum Token {
     SyntaxError,
-    List,
+    State,
     Exit,
     // values (WIP)
     Float(f64),
@@ -121,7 +121,7 @@ impl Input {
         let re_whitespace = Regex::new(r"^[ ]+").unwrap();
         let re_del = Regex::new(r"^del[\n ]").unwrap();
         let re_exit = Regex::new(r"^exit[\n ]").unwrap();
-        let re_list = Regex::new(r"^list[\n ]").unwrap();
+        let re_state = Regex::new(r"^state[\n ]").unwrap();
         let re_none = Regex::new(r"^None[\n ]").unwrap();
         let re_variable = Regex::new(r"^[A-z][A-z0-9]*").unwrap();
         let re_plus = Regex::new(r"^\+").unwrap();
@@ -156,9 +156,9 @@ impl Input {
                 token: Token::Exit,
                 token_len: 4,
             };
-        } else if let Some(_) = Input::check_match(&self.stream, re_list) {
+        } else if let Some(_) = Input::check_match(&self.stream, re_state) {
             return RegexMatch {
-                token: Token::List,
+                token: Token::State,
                 token_len: 4,
             };
         } else if let Some(_) = Input::check_match(&self.stream, re_none) {
@@ -274,7 +274,6 @@ impl Input {
      */
     pub fn get_next_token(&mut self, skip_whitespace: bool) -> &Token {
         if !self.history.is_empty() {
-            println!("Getting from history");
             self.current = self.history.pop_front().unwrap();
             return &self.current;
         }
