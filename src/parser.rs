@@ -54,14 +54,7 @@ impl Parser {
         return parser;
     }
 
-    #[allow(dead_code)]
-    fn parse_newline(&mut self) -> Value {
-        // consume token
-        self.input.get_next_token(true);
-        return Value::Terminator;
-    }
-
-    /* program ::= exit | state | statement | program statement
+    /* program ::= exit | state | var_ref_print | statement | program statement
      *
      */
     pub fn parse_program(&mut self) {
@@ -69,7 +62,6 @@ impl Parser {
             // update current token
             self.input.get_next_token(true);
 
-            // parse
             match self.input.current {
                 scanner::Token::Exit => break,
                 scanner::Token::State => {
@@ -82,16 +74,25 @@ impl Parser {
                     let value: Value = self.parse_statement();
                     match value {
                         Value::Exit => break,
-                        _ => println!("Result: {:?}", value)
+                        _ => {
+                            // TODO: catch early termination -> syntax error?
+                            println!("Result: {:?}", value)
+                        }
                     }
                 }
-
             };
         }
     }
 
-    /* currently unused -
-     * thinking about logging functions etc
+    #[allow(dead_code)]
+    fn parse_newline(&mut self) -> Value {
+        // consume token
+        self.input.get_next_token(true);
+        return Value::Terminator;
+    }
+
+    /*
+     * TODO: could serve purpose for logging in the future
      */
     #[allow(dead_code)]
     fn parse_exit(&mut self) -> Value {
@@ -113,7 +114,7 @@ impl Parser {
         return Value::Terminator;
     }
 
-    /* statement ::= expr | var_ref | var = expr | epsilon
+    /* statement ::= expr | var = expr | epsilon
      * TODO think about utility of epsilon
      * TODO think about how to terminate successfully
      * TODO thinking about incomplete lines - currently, trying to allow for
@@ -270,7 +271,7 @@ impl Parser {
                     Some(data) => {
                         return data.value_meta.clone();
                     },
-                    _ => return Value::NameError,
+                    None => return Value::NameError,
                 }
             },
             _ => {
