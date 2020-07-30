@@ -11,7 +11,6 @@ pub enum Token {
     State,
     Exit,
     // values (WIP)
-    VarRefPrint,
     Float(f64),
     Int(i64),
     // variables
@@ -124,7 +123,6 @@ impl Input {
         let re_exit = Regex::new(r"^exit[\n ]").unwrap();
         let re_state = Regex::new(r"^state[\n ]").unwrap();
         let re_none = Regex::new(r"^None[\n ]").unwrap();
-        let re_varrefprint = Regex::new(r"^[A-z][A-z0-9]*\n").unwrap();
         let re_variable = Regex::new(r"^[A-z][A-z0-9]*").unwrap();
         let re_plus = Regex::new(r"^\+").unwrap();
         let re_minus = Regex::new(r"^-").unwrap();
@@ -167,13 +165,6 @@ impl Input {
             return RegexMatch {
                 token: Token::NoneT,
                 token_len: 4,
-            };
-        } else if let Some(name) = Input::check_match(&self.stream, re_varrefprint) {
-            let name_clone = String::from(name.clone());
-            let name_clone_len = name_clone.len();
-            return RegexMatch {
-                token: Token::Variable(name_clone),
-                token_len: name_clone_len,
             };
         } else if let Some(name) = Input::check_match(&self.stream, re_variable) {
             let name_clone = String::from(name.clone());
@@ -244,7 +235,8 @@ impl Input {
 
     /* Look ahead - assists w/ parsing
      *
-     * ignore_whitespace: if true, consumes + skips whitespace
+     *
+     * ignore_whitespace: if true, consumes + skips whitespace (modifying self.stream)
      */
     pub fn look_ahead(&mut self, ignore_whitespace: bool) -> &Token {
         let mut next_token_match: RegexMatch = self.re_match();
@@ -252,6 +244,7 @@ impl Input {
         if ignore_whitespace {
             match next_token_match.token {
                 Token::WhiteSpace(_) => {
+                    // consume whitespace, get next match
                     self.stream = String::from(&self.stream[next_token_match.token_len..]);
                     next_token_match = self.re_match();
                 },
@@ -262,6 +255,7 @@ impl Input {
         // update current, stream
         match next_token_match.token {
             Token::SyntaxError => {
+                // TODO this could cause problems down the road. rethink logic
                 self.history.push_back(next_token_match.token);
                 self.flush_line();
             }

@@ -20,6 +20,7 @@ enum Value {
     Terminator,
     Exit,
     Error,
+    SpecificError(String),
     NotImplementedError,
     NameError,
 }
@@ -276,7 +277,7 @@ impl Parser {
             },
             _ => {
                     self.input.get_next_token(true);
-                    return Value::Error;
+                    return Value::SpecificError(String::from("Unknown error: parsing var ref"));
             },
         };
     }
