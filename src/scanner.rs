@@ -317,3 +317,52 @@ impl Input {
         return &self.current;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn setup(stream_in: Option<String>, current_in: Option<Token>, history_in: Option<VecDeque<Token>>) -> Input {
+        let stream: String;
+        let current: Token;
+        let history: VecDeque<Token>;
+        match stream_in {
+            Some(val) => stream = val,
+            None => stream = String::from(""),
+        };
+        match current_in {
+            Some(val) => current = val,
+            None => current = Token::NewLine,
+        };
+        match history_in {
+            Some(val) => history = val,
+            None => history = VecDeque::new(),
+        }
+        let input = Input {
+            stream: stream,
+            current: current,
+            history: history,
+        };
+        return input;
+    }
+
+    fn same_token(result: &Token, correct: Token) -> bool {
+        use std::mem::discriminant;
+        return discriminant(result) == discriminant(&correct);
+    }
+
+    #[test]
+    fn test_get_next_token() {
+        let mut input = setup(Some(String::from("1 + 3")), None, None);
+        let mut result: &Token = input.get_next_token(false);
+        assert!(same_token(result, Token::Int(1)));
+        result = input.get_next_token(false);
+        assert!(same_token(result, Token::WhiteSpace(1)));
+        result = input.get_next_token(false);
+        assert!(same_token(result, Token::Plus));
+        result = input.get_next_token(false);
+        assert!(same_token(result, Token::WhiteSpace(1)));
+        result = input.get_next_token(false);
+        assert!(same_token(result, Token::Int(4)));
+    }
+}
