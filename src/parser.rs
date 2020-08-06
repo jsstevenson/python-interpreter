@@ -150,12 +150,13 @@ impl Parser {
             Value::Float(_) => var_type = Type::Float,
             _ => return Value::Error,
         };
+        let return_value: Value = var_value.clone();
         let data = Data {
             value_meta: var_value,
             type_meta: var_type,
         };
         self.state.vars.insert(var_name, data);
-        return Value::Terminator;
+        return return_value;
     }
 
     /* expr ::= term | expr + term | expr - term
