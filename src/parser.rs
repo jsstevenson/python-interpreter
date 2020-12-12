@@ -166,16 +166,9 @@ impl Parser {
         let mut return_value = self.parse_term();
         loop {
             match &self.input.current {
-                /*
-                scanner::Token::WhiteSpace(_) => {
-                    // println!("parse_expr consume whitespace");
-                    self.input.get_next_token(true); // consume whitespace
-                    // println!("current is now {:?}", &self.input.current);
-                }
-                */
                 scanner::Token::Plus => {
-                    // println!("handling plus");
                     self.input.get_next_token(true);
+                    // TODO var ref not getting recognized as an int?
                     if let Value::Int(val_int) = return_value {
                         if let Value::Int(val_parsed) = self.parse_term() {
                             return_value = Value::Int(val_int + val_parsed);
